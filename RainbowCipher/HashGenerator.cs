@@ -1,7 +1,13 @@
 ﻿using System;
 namespace RainbowCipher
 {
-    public class HashGenerator
+
+    public interface IHashGenerator
+    {
+        public byte[] Hash(byte[] data);
+    }
+
+    public class HashGenerator: IHashGenerator
     {
         private const int _blockLength = 16;
         private ICipher _cipher;

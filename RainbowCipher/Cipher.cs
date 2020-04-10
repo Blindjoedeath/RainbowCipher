@@ -262,7 +262,7 @@ namespace RainbowCipher
         {
             var result = new ImmutableBitArray[4]
             {
-                    P2(value[0]), P3(value[1]), P2(value[2]), P1(value[3])
+                P2(value[0]), P3(value[1]), P2(value[2]), P1(value[3])
             };
             return new RainbowBlock(result);
         }

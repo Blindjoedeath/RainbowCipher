@@ -12,14 +12,12 @@ namespace RainbowCipher
         {
             var cipher = new Rainbow();
             var hashGenerator = new HashGenerator(cipher);
+            var signature = new CryptoSignature(hashGenerator);
 
-            var message = "Hello world!!!!!!:))))";
-            var messageData = Encoding.UTF8.GetBytes(message);
-            var resultData = hashGenerator.Hash(messageData);
+            var message = Encoding.UTF8.GetBytes("test");
+            var sign = signature.CreateSignature(message);
+            Console.WriteLine(signature.IsCorrect(sign));
 
-            
-            var result = Encoding.UTF8.GetString(resultData);
-            Console.WriteLine(result);
         }
     }
 }

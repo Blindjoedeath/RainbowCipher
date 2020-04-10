@@ -10,77 +10,104 @@ namespace RainbowCipher
     {
         static void Main(string[] args)
         {
-            Random rand = new Random();
-            var message = "Radif, kak dela?";
-            var messageData = Encoding.UTF8.GetBytes(message);
-            var bytes = new byte[16];
-            rand.NextBytes(bytes);
-            var rainbow = new Rainbow(bytes);
-            var encrypted = rainbow.Encrypt(messageData);
-            var decrypted = rainbow.Decrypt(encrypted);
-            var result = Encoding.UTF8.GetString(decrypted);
-            Console.WriteLine(Encoding.UTF8.GetString(encrypted));
-            Console.WriteLine(result);
-        }
-    }
-
-    class ImmutableBitArray
-    {
-        public BitArray value { get; private set; }
-
-        public ImmutableBitArray(BitArray array)
-        {
-            value = array;
-        }
-
-        public ImmutableBitArray(byte[] bytes)
-        {
-            value = new BitArray(bytes);
-        }
-
-        public ImmutableBitArray(uint number)
-        {
-            var bytes = BitConverter.GetBytes(number);
-            value = new BitArray(bytes);
-        }
-
-        public ImmutableBitArray Xor(ImmutableBitArray array)
-        {
-            var clone = value.Clone() as BitArray;
-            var bitArray = clone.Xor(array.value);
-            return new ImmutableBitArray(bitArray);
-        }
-
-        public ImmutableBitArray And(ImmutableBitArray array)
-        {
-            var clone = value.Clone() as BitArray;
-            var bitArray = clone.And(array.value);
-            return new ImmutableBitArray(bitArray);
-        }
-
-        public ImmutableBitArray RightShift(int count)
-        {
-            var clone = value.Clone() as BitArray;
-            var bitArray = clone.RightShift(count);
-            return new ImmutableBitArray(bitArray);
-        }
-
-        public ImmutableBitArray LeftShift(int count)
-        {
-            var clone = value.Clone() as BitArray;
-            var bitArray = clone.LeftShift(count);
-            return new ImmutableBitArray(bitArray);
-        }
-    }
-
-    class Rainbow
-    {
-
-        class RainbowBlock
-        {
-
-            private static readonly byte[] f = new byte[256]
+            string message, decryptedMessage;
+            int count = 0;
+            do
             {
+                var random = new Random();
+
+                var messageLength = random.Next() % 100 + 50;
+                var messageData = new byte[messageLength];
+                random.NextBytes(messageData);
+                message = Encoding.UTF8.GetString(messageData);
+
+                var key = new byte[16];
+                random.NextBytes(key);
+
+                var rainbow = new Rainbow();
+                rainbow.Key = key;
+
+                var cryptor = new BlockCryptor(rainbow);
+                var encryped = cryptor.Encrypt(messageData);
+                var decrypted = cryptor.Decrypt(encryped);
+
+                decryptedMessage = Encoding.UTF8.GetString(decrypted);
+                if (message == decryptedMessage)
+                { 
+                    Console.WriteLine($"Success {++count}");
+                }
+                else
+                {
+                    Console.WriteLine("Error");
+                    Console.WriteLine(decryptedMessage);
+                }
+            } while (message == decryptedMessage);
+        }
+
+        class ImmutableBitArray
+        {
+            public BitArray value { get; private set; }
+
+            public ImmutableBitArray(BitArray array)
+            {
+                value = array;
+            }
+
+            public ImmutableBitArray(byte[] bytes)
+            {
+                value = new BitArray(bytes);
+            }
+
+            public ImmutableBitArray(uint number)
+            {
+                var bytes = BitConverter.GetBytes(number);
+                value = new BitArray(bytes);
+            }
+
+            public ImmutableBitArray Xor(ImmutableBitArray array)
+            {
+                var clone = value.Clone() as BitArray;
+                var bitArray = clone.Xor(array.value);
+                return new ImmutableBitArray(bitArray);
+            }
+
+            public ImmutableBitArray And(ImmutableBitArray array)
+            {
+                var clone = value.Clone() as BitArray;
+                var bitArray = clone.And(array.value);
+                return new ImmutableBitArray(bitArray);
+            }
+
+            public ImmutableBitArray RightShift(int count)
+            {
+                var clone = value.Clone() as BitArray;
+                var bitArray = clone.RightShift(count);
+                return new ImmutableBitArray(bitArray);
+            }
+
+            public ImmutableBitArray LeftShift(int count)
+            {
+                var clone = value.Clone() as BitArray;
+                var bitArray = clone.LeftShift(count);
+                return new ImmutableBitArray(bitArray);
+            }
+        }
+
+        public interface ICipher
+        {
+            byte[] Encrypt(byte[] block);
+            byte[] Decrypt(byte[] block);
+            byte[] Key { get; set; }
+        }
+
+        public class Rainbow : ICipher
+        {
+
+            class RainbowBlock
+            {
+
+                private static readonly byte[] f = new byte[256]
+                {
                 0x00, 0x0e, 0x1c, 0x08, 0x38, 0xe5, 0x10, 0x19,
                 0x70, 0x16, 0xcb, 0x42, 0x20, 0xe7, 0x32, 0xd4,
                 0xe0, 0xcc, 0x2c, 0x65, 0x97, 0xa7, 0x84, 0x1f,
@@ -113,10 +140,10 @@ namespace RainbowCipher
                 0x69, 0x9b, 0xc4, 0x4e, 0xc6, 0xc5, 0xdd, 0x68,
                 0x4d, 0xeb, 0xa2, 0xf6, 0xcd, 0x27, 0xe2, 0x34,
                 0xf5, 0x7b, 0x93, 0x1a, 0xbd, 0x0d, 0x86, 0xff
-            };
+                };
 
-            private static readonly byte[] f_1 = new byte[]
-            {
+                private static readonly byte[] f_1 = new byte[]
+                {
                 0x00, 0x60, 0xc0, 0x4d, 0x81, 0xd2, 0x9a, 0x80,
                 0x03, 0x2c, 0xa5, 0x84, 0x35, 0xfd, 0x01, 0x63,
                 0x06, 0x33, 0x58, 0xab, 0x4b, 0x97, 0x09, 0xb7,
@@ -149,235 +176,341 @@ namespace RainbowCipher
                 0x92, 0x45, 0xad, 0xf1, 0x23, 0xe7, 0x77, 0x9c,
                 0x36, 0x71, 0x82, 0x86, 0xa2, 0xf8, 0xf3, 0x4e,
                 0xb8, 0x43, 0x7c, 0x27, 0xa1, 0x93, 0xc9, 0xff
-            };
-
-
-            public ImmutableBitArray[] value { get; private set; }
-
-            public RainbowBlock(ImmutableBitArray[] bitArrays)
-            {
-                value = bitArrays;
-            }
-
-            public static RainbowBlock FromBytes(byte[] bytes)
-            {
-                int length = bytes.Length / 4;
-                var arrays = bytes.Chunk(length).Select((chunk) => new ImmutableBitArray(chunk.ToArray())).ToArray();
-                var block = new RainbowBlock(arrays);
-                return block;
-            }
-
-
-            public RainbowBlock G(RainbowBlock key)
-            {
-                var result = new ImmutableBitArray[4];
-                for(int i = 0; i < 4; ++i)
-                {
-                    result[i] = value[i].Xor(key.value[i]);
-                }
-                return new RainbowBlock(result);
-            }
-
-            public RainbowBlock B(RainbowBlock key)
-            {
-                var result = new ImmutableBitArray[4];
-                for (int i = 0; i < 4; ++i)
-                {
-                    result[i] =
-                        value[0].And(key.value[i % 4])
-                        .Xor(value[1].And(key.value[(1 + i) % 4]))
-                        .Xor(value[2].And(key.value[(2 + i) % 4]))
-                        .Xor(value[3].And(key.value[(3 + i) % 4]));
-                }
-                return new RainbowBlock(result);
-            }
-
-            private ImmutableBitArray P1(ImmutableBitArray bits)
-            {
-                var x = new byte[4];
-                bits.value.CopyTo(x, 0);
-                var converted = new byte[4]{f[x[1]], f_1[x[0]], f[x[3]], f_1[x[2]]};
-                return new ImmutableBitArray(converted);
-            }
-
-            private ImmutableBitArray P2(ImmutableBitArray bits)
-            {
-                var x = new byte[4];
-                bits.value.CopyTo(x, 0);
-                var converted = new byte[4] { f[x[2]], f[x[3]], f_1[x[0]], f_1[x[1]] };
-                return new ImmutableBitArray(converted);
-            }
-
-            private ImmutableBitArray P3(ImmutableBitArray bits)
-            {
-                var x = new byte[4];
-                bits.value.CopyTo(x, 0);
-                var converted = new byte[4] { f[x[3]], f[x[2]], f_1[x[1]], f_1[x[0]] };
-                return new ImmutableBitArray(converted);
-            }
-
-            public RainbowBlock R()
-            {
-                var result = new ImmutableBitArray[4]
-                {
-                    P2(value[0]), P3(value[1]), P2(value[2]), P1(value[3])
                 };
-                return new RainbowBlock(result);
+
+
+                public ImmutableBitArray[] value { get; private set; }
+
+                public RainbowBlock(ImmutableBitArray[] bitArrays)
+                {
+                    value = bitArrays;
+                }
+
+                public static RainbowBlock FromBytes(byte[] bytes)
+                {
+                    int length = bytes.Length / 4;
+                    var arrays = bytes.Chunk(length).Select((chunk) => new ImmutableBitArray(chunk.ToArray())).ToArray();
+                    var block = new RainbowBlock(arrays);
+                    return block;
+                }
+
+
+                public RainbowBlock G(RainbowBlock key)
+                {
+                    var result = new ImmutableBitArray[4];
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        result[i] = value[i].Xor(key.value[i]);
+                    }
+                    return new RainbowBlock(result);
+                }
+
+                public RainbowBlock B(RainbowBlock key)
+                {
+                    var result = new ImmutableBitArray[4];
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        result[i] =
+                            value[0].And(key.value[i % 4])
+                            .Xor(value[1].And(key.value[(1 + i) % 4]))
+                            .Xor(value[2].And(key.value[(2 + i) % 4]))
+                            .Xor(value[3].And(key.value[(3 + i) % 4]));
+                    }
+                    return new RainbowBlock(result);
+                }
+
+                private ImmutableBitArray P1(ImmutableBitArray bits)
+                {
+                    var x = new byte[4];
+                    bits.value.CopyTo(x, 0);
+                    var converted = new byte[4] { f[x[1]], f_1[x[0]], f[x[3]], f_1[x[2]] };
+                    return new ImmutableBitArray(converted);
+                }
+
+                private ImmutableBitArray P2(ImmutableBitArray bits)
+                {
+                    var x = new byte[4];
+                    bits.value.CopyTo(x, 0);
+                    var converted = new byte[4] { f[x[2]], f[x[3]], f_1[x[0]], f_1[x[1]] };
+                    return new ImmutableBitArray(converted);
+                }
+
+                private ImmutableBitArray P3(ImmutableBitArray bits)
+                {
+                    var x = new byte[4];
+                    bits.value.CopyTo(x, 0);
+                    var converted = new byte[4] { f[x[3]], f[x[2]], f_1[x[1]], f_1[x[0]] };
+                    return new ImmutableBitArray(converted);
+                }
+
+                public RainbowBlock R()
+                {
+                    var result = new ImmutableBitArray[4]
+                    {
+                    P2(value[0]), P3(value[1]), P2(value[2]), P1(value[3])
+                    };
+                    return new RainbowBlock(result);
+                }
+
+                public byte[] ToBytes()
+                {
+                    var result = new byte[16];
+                    for (int i = 0; i < value.Length; ++i)
+                    {
+                        var bytes = new byte[4];
+                        value[i].value.CopyTo(bytes, 0);
+                        bytes.CopyTo(result, i * bytes.Length);
+                    }
+                    return result;
+                }
+
             }
 
-            public byte[] ToBytes()
+            int _rounds;
+            ImmutableBitArray[][] _decryptionKeys;
+            ImmutableBitArray[][] _encryptionKeys;
+
+            private byte[] _key;
+            public byte[] Key
             {
-                var result = new byte[16];
-                for (int i = 0; i < value.Length; ++i)
+                get => _key;
+                set
                 {
-                    var bytes = new byte[4];
-                    value[i].value.CopyTo(bytes, 0);
-                    bytes.CopyTo(result, i * bytes.Length);
+                    _key = value;
+                    var blockKey = RainbowBlock.FromBytes(_key).value;
+                    CreateRoundKeys(blockKey);
+                }
+            }
+
+            public Rainbow(int rounds = 7)
+            {
+                _rounds = rounds;
+            }
+
+            private void CreateRoundKeys(ImmutableBitArray[] key)
+            {
+                _encryptionKeys = new ImmutableBitArray[2 * (_rounds + 1)][];
+                _decryptionKeys = new ImmutableBitArray[2 * (_rounds + 1)][];
+                _encryptionKeys[0] = key;
+
+                var i = 1;
+                var constant1 = new ImmutableBitArray(0xb7e15163);
+                var constant2 = new ImmutableBitArray(0xffffffff);
+                while (i < 2 * (_rounds + 1))
+                {
+                    _encryptionKeys[i] = _encryptionKeys[i - 1].Clone() as ImmutableBitArray[];
+
+                    var shifts = new int[4] { 3, 5, 7, 11 };
+                    for (var q = 0; q < 4; ++q)
+                    {
+                        _encryptionKeys[i][q] =
+                            _encryptionKeys[i][0].RightShift(shifts[q % 4])
+                            .Xor(_encryptionKeys[i][1].RightShift(shifts[(1 + q) % 4]))
+                            .Xor(_encryptionKeys[i][2].RightShift(shifts[(2 + q) % 4]))
+                            .Xor(_encryptionKeys[i][3].RightShift(shifts[(3 + q) % 4]))
+                            .Xor(constant1);
+                    }
+                    ++i;
+                }
+                var j = 0;
+                while (j < _rounds + 1)
+                {
+                    i = 2 * j + 1;
+                    _encryptionKeys[i][0] = _encryptionKeys[i][1].Xor(_encryptionKeys[i][2]).Xor(_encryptionKeys[i][3]).Xor(constant2);
+                    _decryptionKeys[2 * (_rounds + 1) - i] = _encryptionKeys[i];
+                    ++j;
+                }
+                j = 0;
+                while (j < _rounds + 1)
+                {
+                    i = 2 * j;
+                    var i1 = 2 * (_rounds - j);
+                    var i2 = i1 + 1;
+
+                    _decryptionKeys[i] = new ImmutableBitArray[4];
+
+                    var shifts = new List<int>() { 0, 1, 2, 3 };
+                    for (int q = 0; q < 4; ++q)
+                    {
+                        _decryptionKeys[i][q] =
+                            _encryptionKeys[i1][0].And(_encryptionKeys[i2][shifts[q % 4]])
+                            .Xor(_encryptionKeys[i1][1].And(_encryptionKeys[i2][shifts[(1 + q) % 4]]))
+                            .Xor(_encryptionKeys[i1][2].And(_encryptionKeys[i2][shifts[(2 + q) % 4]]))
+                            .Xor(_encryptionKeys[i1][3].And(_encryptionKeys[i2][shifts[(3 + q) % 4]]));
+                    }
+                    ++j;
+                }
+
+            }
+
+            private byte[] Crypt(byte[] data, ImmutableBitArray[][] keys)
+            {
+                var block = RainbowBlock.FromBytes(data);
+                for (int i = 0; i < _rounds + 1; ++i)
+                {
+                    var key1 = new RainbowBlock(keys[2 * i]);
+                    var key2 = new RainbowBlock(keys[2 * i + 1]);
+                    block = block.G(key1).B(key2);
+                    if (i != _rounds)
+                    {
+                        block = block.R();
+                    }
+                }
+                return block.ToBytes();
+            }
+
+            public byte[] Encrypt(byte[] data)
+            {
+                return Crypt(data, _encryptionKeys);
+            }
+
+            public byte[] Decrypt(byte[] data)
+            {
+                return Crypt(data, _decryptionKeys);
+            }
+        }
+
+        public class BlockCryptor
+        {
+            private const int _blockLength = 16;
+            private ICipher _cipher;
+            private byte[] _IV;
+
+            private void CreateInitializationVector()
+            {
+                _IV = new byte[_blockLength];
+
+                var random = new Random();
+                random.NextBytes(_IV);
+            }
+
+            public BlockCryptor(ICipher cipher)
+            {
+                _cipher = cipher;
+                CreateInitializationVector();
+            }
+
+            private byte[] EndBlock
+            {
+                get
+                {
+                    var result = new byte[_blockLength];
+                    result[0] = 80;
+                    return result;
+                }
+            }
+
+            private byte[] AddEndToPartial(byte[] partial)
+            {
+                var append = EndBlock.Take(_blockLength - partial.Length).ToArray();
+                var result = new byte[_blockLength];
+                partial.CopyTo(result, 0);
+                append.CopyTo(result, partial.Length);
+                return result;
+            }
+
+            private byte[] RemoveEndBlock(byte[] data)
+            {
+                var length = data.Length;
+                for(int i = data.Length - 1; i >= 0; --i)
+                {
+                    if (data[i] == 80)
+                    {
+                        length = i;
+                        break;
+                    }
+                }
+                return data.Take(length).ToArray();
+            }
+
+            private byte[][] SplitOnBlocks(byte[] data, bool withEndBlock = true)
+            {
+                var blocks = (from t in data.Chunk(_blockLength) select t.ToArray()).ToList();
+
+                if (!withEndBlock)
+                {
+                    return blocks.ToArray();
+                }
+
+                var last = blocks.Last();
+                if (last.Length == _blockLength)
+                {
+                    blocks.Add(EndBlock);
+                }
+                else
+                {
+                    var filled = AddEndToPartial(last);
+                    blocks.Remove(last);
+                    blocks.Insert(blocks.Count, filled);
+                }
+                return blocks.ToArray();
+            }
+
+            private byte[] Xor(byte[] a, byte[] b)
+            {
+                var bitA = new BitArray(a);
+                var bitB = new BitArray(b);
+                var xor = bitA.Xor(bitB);
+                var result = new byte[a.Length];
+                xor.CopyTo(result, 0);
+                return result;
+            }
+        
+            private byte[] CFBEncryption(byte[][] blocks)
+            {
+                var c = _IV;
+                var result = new byte[blocks.Length * _blockLength];
+                for(int i = 0; i < blocks.Length; ++i)
+                {
+                    var encrypted = _cipher.Encrypt(c);
+                    c = Xor(encrypted, blocks[i]);
+                    c.CopyTo(result, _blockLength * i);
                 }
                 return result;
             }
 
-        }
-
-        int _rounds;
-        ImmutableBitArray[][] _decryptionKeys;
-        ImmutableBitArray[][] _encryptionKeys;
-
-        public Rainbow(byte[] key, int rounds = 7)
-        {
-            _rounds = rounds;
-            var blockKey = RainbowBlock.FromBytes(key).value;
-            CreateRoundKeys(blockKey);
-        }
-
-        private void print(ImmutableBitArray array)
-        {
-            var result = "";
-            var copy = new byte[4];
-            array.value.CopyTo(copy, 0);
-            result += $"{copy[0]}, {copy[1]}, {copy[2]}, {copy[3]}";
-            Console.WriteLine(result);
-        }
-
-        private void print(ImmutableBitArray[] arrays)
-        {
-            Console.WriteLine();
-            foreach (var array in arrays)
+            private byte[] CFBDecryption(byte[][] blocks)
             {
-                print(array);
-            }
-            Console.WriteLine();
-        }
-
-        private void print(RainbowBlock block)
-        {
-            Console.WriteLine();
-            foreach (var array in block.value)
-            {
-                print(array);
-            }
-            Console.WriteLine();
-        }
-
-        private void CreateRoundKeys(ImmutableBitArray[] key)
-        {
-            _encryptionKeys = new ImmutableBitArray[2 * (_rounds + 1)][];
-            _decryptionKeys = new ImmutableBitArray[2 * (_rounds + 1)][];
-            _encryptionKeys[0] = key;
-
-            var i = 1;
-            var constant1 = new ImmutableBitArray(0xb7e15163);
-            var constant2 = new ImmutableBitArray(0xffffffff);
-            while (i < 2 * (_rounds + 1))
-            {
-                _encryptionKeys[i] = _encryptionKeys[i - 1].Clone() as ImmutableBitArray[];
-
-                var shifts = new int[4] { 3, 5, 7, 11 };
-                for (var q = 0; q < 4; ++q)
+                var result = new byte[blocks.Length * _blockLength];
+                for (int i = 0; i < blocks.Length; ++i)
                 {
-                    _encryptionKeys[i][q] =
-                        _encryptionKeys[i][0].RightShift(shifts[q % 4])
-                        .Xor(_encryptionKeys[i][1].RightShift(shifts[(1 + q) % 4]))
-                        .Xor(_encryptionKeys[i][2].RightShift(shifts[(2 + q) % 4]))
-                        .Xor(_encryptionKeys[i][3].RightShift(shifts[(3 + q) % 4]))
-                        .Xor(constant1);
+                    var encrypted = _cipher.Encrypt(i == 0 ? _IV : blocks[i-1]);
+                    var block = Xor(encrypted, blocks[i]);
+                    block.CopyTo(result, _blockLength * i);
                 }
-                ++i;
+                return result;
             }
-            var j = 0;
-            while (j < _rounds + 1)
+
+            public byte[] Encrypt(byte[] data)
             {
-                i = 2 * j + 1;
-                _encryptionKeys[i][0] = _encryptionKeys[i][1].Xor(_encryptionKeys[i][2]).Xor(_encryptionKeys[i][3]).Xor(constant2);
-                _decryptionKeys[2 * (_rounds + 1) - i] = _encryptionKeys[i];
-                ++j;
+                var blocks = SplitOnBlocks(data);
+                return CFBEncryption(blocks);
             }
-            j = 0;
-            while (j < _rounds + 1)
+
+            public byte[] Decrypt(byte[] data)
             {
-                i = 2 * j;
-                var i1 = 2 * (_rounds - j);
-                var i2 = i1 + 1;
-
-                _decryptionKeys[i] = new ImmutableBitArray[4];
-
-                var shifts = new List<int>() { 0, 1, 2, 3 };
-                for (int q = 0; q < 4; ++q)
-                {
-                    _decryptionKeys[i][q] =
-                        _encryptionKeys[i1][0].And(_encryptionKeys[i2][shifts[q % 4]])
-                        .Xor(_encryptionKeys[i1][1].And(_encryptionKeys[i2][shifts[(1 + q) % 4]]))
-                        .Xor(_encryptionKeys[i1][2].And(_encryptionKeys[i2][shifts[(2 + q) % 4]]))
-                        .Xor(_encryptionKeys[i1][3].And(_encryptionKeys[i2][shifts[(3 + q) % 4]]));
-                }
-                ++j;
+                var blocks = SplitOnBlocks(data, false);
+                var decrypted = CFBDecryption(blocks);
+                var pure = RemoveEndBlock(decrypted);
+                return pure;
             }
-
         }
-
-        private byte[] Crypt(byte[] data, ImmutableBitArray[][] keys)
-        {
-            var block = RainbowBlock.FromBytes(data);
-            for (int i = 0; i < _rounds + 1; ++i)
-            {
-                var key1 = new RainbowBlock(keys[2 * i]);
-                var key2 = new RainbowBlock(keys[2 * i + 1]);
-                block = block.G(key1).B(key2);
-                if (i != _rounds)
-                {
-                    block = block.R();
-                }
-            }
-            return block.ToBytes();
-        }
-
-        public byte[] Encrypt(byte[] data)
-        {
-            return Crypt(data, _encryptionKeys);
-        }
-
-        public byte[] Decrypt(byte[] data)
-        {
-            return Crypt(data, _decryptionKeys);
-        }
-
-
     }
-}
 
-public static class Extensions
-{
-    public static IEnumerable<IEnumerable<T>> Chunk<T>(this IEnumerable<T> list, int chunkSize)
+    public static class Extensions
     {
-        if (chunkSize <= 0)
+        public static IEnumerable<IEnumerable<T>> Chunk<T>(this IEnumerable<T> list, int chunkSize)
         {
-            throw new ArgumentException("chunkSize must be greater than 0.");
-        }
+            if (chunkSize <= 0)
+            {
+                throw new ArgumentException("chunkSize must be greater than 0.");
+            }
 
-        while (list.Any())
-        {
-            yield return list.Take(chunkSize);
-            list = list.Skip(chunkSize);
+            while (list.Any())
+            {
+                yield return list.Take(chunkSize);
+                list = list.Skip(chunkSize);
+            }
         }
     }
 }

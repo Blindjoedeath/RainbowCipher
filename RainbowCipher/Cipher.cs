@@ -76,7 +76,7 @@ namespace RainbowCipher
 
                 _decryptionKeys[i] = new ImmutableBitArray[4];
 
-                var shifts = new List<int>() { 0, 1, 2, 3 };
+                var shifts = new int[4] { 0, 1, 2, 3 };
                 for (int q = 0; q < 4; ++q)
                 {
                     _decryptionKeys[i][q] =

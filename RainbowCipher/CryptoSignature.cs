@@ -75,8 +75,5 @@ namespace RainbowCipher
             var right = BigInteger.ModPow(BigInteger.ModPow(g, s, _p) * BigInteger.ModPow(y, h, _p), 1, _p);
             return left == right;
         }
-
-
-
     }
 }

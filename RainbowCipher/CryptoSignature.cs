@@ -40,13 +40,6 @@ namespace RainbowCipher
         {
             var h = new BigInteger(_hashGenerator.Hash(data));
 
-            // Actually hash already has to be positive number, but for now,
-            // we don't care about hash integrity
-            if (h.Sign == -1)
-            {
-                h *= -1;
-            }
-
             var k = GenerateBigInteger(2, _q - 1);
             var x = GenerateBigInteger(2, _q - 1);  
             var y = BigInteger.ModPow(g, x, _p);

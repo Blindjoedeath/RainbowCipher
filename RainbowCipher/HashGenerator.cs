@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 namespace RainbowCipher
 {
 
@@ -16,10 +17,7 @@ namespace RainbowCipher
 
         private void CreateH0()
         {
-            _h0 = new byte[_blockLength];
-
-            var random = new Random();
-            random.NextBytes(_h0);
+            _h0 = Encoding.UTF8.GetBytes("1234567812345678");
         }
 
         public HashGenerator(ICryptor cryptor)

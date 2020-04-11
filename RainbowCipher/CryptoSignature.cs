@@ -26,7 +26,7 @@ namespace RainbowCipher
         {
             get
             {
-                return BigInteger.ModPow(2, (_p - 1) / _q, _p);
+                return BigInteger.ModPow(666, (_p - 1) / _q, _p);
             }
         }
 
@@ -39,6 +39,13 @@ namespace RainbowCipher
         public Signature CreateSignature(byte[] data)
         {
             var h = new BigInteger(_hashGenerator.Hash(data));
+
+            // Actually hash already has to be positive number, but for now,
+            // we don't care about hash integrity
+            if (h.Sign == -1)
+            {
+                h *= -1;
+            }
 
             var k = GenerateBigInteger(2, _q - 1);
             var x = GenerateBigInteger(2, _q - 1);  
@@ -64,8 +71,8 @@ namespace RainbowCipher
             var s = new BigInteger(signature.s);
             var y = new BigInteger(signature.y);
             var po = BigInteger.ModPow(r, 1, _q);
-            var left = BigInteger.ModPow(r, po, _q);
-            var right = BigInteger.ModPow(g, s, _q) * BigInteger.ModPow(y, h, _p);
+            var left = BigInteger.ModPow(r, po, _p);
+            var right = BigInteger.ModPow(BigInteger.ModPow(g, s, _p) * BigInteger.ModPow(y, h, _p), 1, _p);
             return left == right;
         }
 

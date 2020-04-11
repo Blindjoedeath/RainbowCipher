@@ -11,13 +11,17 @@ namespace RainbowCipher
         static void Main(string[] args)
         {
             var cipher = new Rainbow();
-            var hashGenerator = new HashGenerator(cipher);
-            var signature = new CryptoSignature(hashGenerator);
+            var hash = new HashGenerator(cipher);
+            var key = "1234567812345678";
+            var keyData = Encoding.UTF8.GetBytes(key);
 
-            var message = Encoding.UTF8.GetBytes("test");
-            var sign = signature.CreateSignature(message);
-            Console.WriteLine(signature.IsCorrect(sign));
+            var message = "asdfmlasjf;weihfpaioifja;ufsgh'osieh";
+            var data = Encoding.UTF8.GetBytes(message);
+            var withKey = hash.Hash(data, keyData);
+            var withoutKey = hash.Hash(data);
 
+            Console.WriteLine(Encoding.UTF8.GetString(withKey));
+            Console.WriteLine(Encoding.UTF8.GetString(withoutKey));
         }
     }
 }

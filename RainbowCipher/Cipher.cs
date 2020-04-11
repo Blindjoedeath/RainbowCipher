@@ -4,14 +4,14 @@ using System.Collections.Generic;
 
 namespace RainbowCipher
 {
-    public interface ICipher
+    public interface ICryptor
     {
         byte[] Encrypt(byte[] block);
         byte[] Decrypt(byte[] block);
         byte[] Key { get; set; }
     }
 
-    public class Rainbow : ICipher
+    public class Rainbow : ICryptor
     {
         int _rounds;
         ImmutableBitArray[][] _decryptionKeys;

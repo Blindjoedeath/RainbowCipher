@@ -2,12 +2,18 @@
 
 namespace RainbowCipher
 {
-    public class MessageCryptor
+    public class MessageCryptor: ICryptor
     {
         private const int _blockLength = 16;
-        private ICipher _cipher;
+        private ICryptor _cryptor;
         private byte[] _IV;
         private BlockSplitter _splitter = new BlockSplitter(_blockLength);
+
+        public byte[] Key
+        {
+            get => _cryptor.Key;
+            set => _cryptor.Key = value;
+        }
 
         private void CreateInitializationVector()
         {
@@ -17,9 +23,9 @@ namespace RainbowCipher
             random.NextBytes(_IV);
         }
 
-        public MessageCryptor(ICipher cipher)
+        public MessageCryptor(ICryptor cryptor)
         {
-            _cipher = cipher;
+            _cryptor = cryptor;
             CreateInitializationVector();
         }
 
@@ -29,7 +35,7 @@ namespace RainbowCipher
             var result = new byte[blocks.Length * _blockLength];
             for (int i = 0; i < blocks.Length; ++i)
             {
-                var encrypted = _cipher.Encrypt(c);
+                var encrypted = _cryptor.Encrypt(c);
                 c = encrypted.Xor(blocks[i]);
                 c.CopyTo(result, _blockLength * i);
             }
@@ -41,7 +47,7 @@ namespace RainbowCipher
             var result = new byte[blocks.Length * _blockLength];
             for (int i = 0; i < blocks.Length; ++i)
             {
-                var encrypted = _cipher.Encrypt(i == 0 ? _IV : blocks[i - 1]);
+                var encrypted = _cryptor.Encrypt(i == 0 ? _IV : blocks[i - 1]);
                 var block = encrypted.Xor(blocks[i]);
                 block.CopyTo(result, _blockLength * i);
             }
